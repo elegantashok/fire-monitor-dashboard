@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Fire & Gas Monitor</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
+        .container { display: flex; justify-content: center; gap: 20px; margin-top: 50px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 200px; }
+        .value { font-size: 2em; font-weight: bold; margin: 10px 0; }
+        .danger { color: #e74c3c; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <h1>Real-time Sensor Dashboard</h1>
+    <div class="container">
+        <div class="card">
+            <h3>Gas Level</h3>
+            <div id="gas-val" class="value">--</div>
+            <p>PPM</p>
+        </div>
+        <div class="card">
+            <h3>Fire Status</h3>
+            <div id="fire-val" class="value">--</div>
+            <p id="fire-text">Scanning...</p>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE WITH YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Path matches what we used in the ESP32 code
+        const sensorRef = db.ref('GasMonitor');
+
+        sensorRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('gas-val').innerText = data.gasValue;
+                
+                // Fire logic (Assuming 0 is fire detected)
+                const fireVal = data.fireValue;
+                const fireText = document.getElementById('fire-text');
+                const fireDisplay = document.getElementById('fire-val');
+                
+                if (fireVal === 0) {
+                    fireDisplay.innerText = "🔥";
+                    fireText.innerText = "DANGER: FIRE";
+                    fireDisplay.classList.add('danger');
+                } else {
+                    fireDisplay.innerText = "✅";
+                    fireText.innerText = "All Clear";
+                    fireDisplay.classList.remove('danger');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

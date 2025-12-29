@@ -1,83 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Fire & Gas Monitor</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #1a1a2e; color: white; }
-        .container { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 30px; }
-        .card { background: #16213e; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); width: 250px; border: 1px solid #0f3460; }
-        .value { font-size: 3em; font-weight: bold; margin: 15px 0; color: #4ecca3; }
-        .label { color: #95a5a6; text-transform: uppercase; font-size: 0.8em; letter-spacing: 1px; }
-        .alarm-active { color: #e74c3c; text-shadow: 0 0 10px #e74c3c; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        #timestamp { margin-top: 20px; color: #536162; font-size: 0.9em; }
-    </style>
-</head>
-<body>
-    <h1>System Monitor: Node 1</h1>
-    
-    <div class="container">
-        <div class="card">
-            <div class="label">Gas Concentration</div>
-            <div id="gas-val" class="value">--</div>
-            <p>PPM</p>
-        </div>
+  <meta charset="UTF-8">
+  <title>Fire & Smoke Monitoring Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <div class="card">
-            <div class="label">Fire Sensor</div>
-            <div id="fire-status" class="value">--</div>
-            <p id="fire-text">Initializing...</p>
-        </div>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .card {
+      background: #1e293b;
+      width: 250px;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .value {
+      font-size: 40px;
+      margin: 10px 0;
+    }
+
+    .label {
+      font-size: 18px;
+      color: #94a3b8;
+    }
+
+    .status {
+      font-size: 22px;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    .normal {
+      background: #16a34a;
+    }
+
+    .alert {
+      background: #dc2626;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.4; }
+    }
+
+    footer {
+      margin-top: 40px;
+      color: #64748b;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🔥 Fire & Smoke Monitoring Dashboard</h1>
+  <p>Live IoT Data from ESP32 via ThingSpeak</p>
+
+  <div class="container">
+
+    <div class="card">
+      <div class="label">Smoke Level</div>
+      <div id="smoke" class="value">--</div>
     </div>
 
-    <p id="timestamp">Waiting for data...</p>
+    <div class="card">
+      <div class="label">Fire Sensor</div>
+      <div id="fire" class="value">--</div>
+    </div>
 
-    <script>
-        // 1. Firebase Configuration (Matches your ESP32)
-        const firebaseConfig = {
-            apiKey: "AIzaSyApiGq4e2WuR3Ye_qTH9WJNRm5qxDv4s4s",
-            databaseURL: "https://arcontrol-fcc95-default-rtdb.firebaseio.com",
-            projectId: "arcontrol-fcc95"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    <div class="card">
+      <div class="label">System Status</div>
+      <div id="status" class="status normal">Normal</div>
+    </div>
 
-        // 2. Updated Path to match your ESP32 Code: /sensors/node_1
-        // Change 'node_1' below if your NodeMCU is using a different ID
-        const sensorRef = db.ref('sensors/node_1');
+  </div>
 
-        sensorRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                // Update Gas
-                document.getElementById('gas-val').innerText = data.gas;
-                
-                // Update Fire & Alarm Status
-                const fireStatus = document.getElementById('fire-status');
-                const fireText = document.getElementById('fire-text');
-                
-                // data.alarm comes from Firebase.RTDB.setBool(&fbdo, path + "/alarm", incomingData.isEmergency);
-                if (data.alarm === true) {
-                    fireStatus.innerText = "🚨";
-                    fireStatus.classList.add('alarm-active');
-                    fireText.innerText = "DANGER DETECTED";
-                    fireText.style.color = "#e74c3c";
-                } else {
-                    fireStatus.innerText = "🛡️";
-                    fireStatus.classList.remove('alarm-active');
-                    fireText.innerText = "Safe";
-                    fireText.style.color = "#4ecca3";
-                }
+  <footer>
+    ⏱ Auto refresh every 5 seconds | Hosted on GitHub Pages
+  </footer>
 
-                // Update Timestamp
-                document.getElementById('timestamp').innerText = "Last Update: " + new Date().toLocaleTimeString();
-            }
-        });
-    </script>
+<script>
+const CHANNEL_ID = "3204856";   // ← Your ThingSpeak Channel ID
+const API_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=1`;
+
+async function fetchData() {
+  try {
+    const response = await fetch(API_URL);
+    const data = await response.json();
+
+    if (data.feeds.length === 0) return;
+
+    const feed = data.feeds[0];
+    const smoke = feed.field1;
+    const fire = feed.field2;
+
+    document.getElementById("smoke").innerText = smoke;
+    document.getElementById("fire").innerText = fire == 0 ? "🔥 FIRE" : "❄️ SAFE";
+
+    const statusDiv = document.getElementById("status");
+
+    if (smoke > 400 || fire == 0) {
+      statusDiv.innerText = "🚨 ALERT";
+      statusDiv.className = "status alert";
+    } else {
+      statusDiv.innerText = "✅ NORMAL";
+      statusDiv.className = "status normal";
+    }
+
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+// Initial call
+fetchData();
+
+// Auto refresh every 5 seconds
+setInterval(fetchData, 5000);
+</script>
+
 </body>
 </html>
